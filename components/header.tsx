@@ -2,51 +2,42 @@
 
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { UserNav } from '@/components/user-nav'
+import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 
-const navigation = [
-  { name: 'Home', href: '#home' },
-  { name: 'Features', href: '#features' },
-  { name: 'Pricing', href: '#pricing' },
-]
-
 export function Header() {
-  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault()
-    const href = e.currentTarget.href
-    const targetId = href.replace(/.*\#/, '')
-    const elem = document.getElementById(targetId)
-    elem?.scrollIntoView({
-      behavior: 'smooth',
-    })
-  }
+  const { isSignedIn, isLoaded } = useUser()
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 max-w-screen-2xl items-center">
         <div className="mr-4 flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
-            <span className="font-bold">Coveri</span>
+          <Link
+            className="mr-6 flex items-center space-x-2 text-lg font-semibold tracking-tight text-foreground transition-colors hover:text-foreground/80"
+            href="/"
+          >
+            Coveri
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <nav className="flex items-center space-x-6">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={handleScroll}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                {item.name}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Link href="/signup">
-              <Button>Get Started</Button>
-            </Link>
+            {!isLoaded ? (
+              <Skeleton className="h-8 w-8 rounded-full" />
+            ) : isSignedIn ? (
+              <UserNav />
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                className="h-8 px-4 text-sm font-medium"
+                asChild
+              >
+                <Link href="/sign-in">Sign in</Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>

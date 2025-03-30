@@ -1,15 +1,14 @@
 import { Header } from '@/components/header'
 import { ThemeProvider } from '@/components/theme-provider'
-import type { Metadata } from 'next'
+import { ClerkProvider } from '@clerk/nextjs'
 import { Inter } from 'next/font/google'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata: Metadata = {
-  title: 'Coveri - AI-Powered Cover Letter Generator',
-  description:
-    'Generate professional, tailored cover letters in minutes using AI.',
+export const metadata = {
+  title: 'Coveri - AI-Powered Cover Letters',
+  description: 'Create perfect cover letters with AI',
 }
 
 export default function RootLayout({
@@ -18,18 +17,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.className} min-h-screen bg-background text-foreground antialiased`}
-        suppressHydrationWarning
-      >
-        <ThemeProvider>
-          <div className="relative flex min-h-screen flex-col">
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body className={inter.className}>
+          <ThemeProvider>
             <Header />
-            <main className="flex-1">{children}</main>
-          </div>
-        </ThemeProvider>
-      </body>
-    </html>
+            {children}
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
