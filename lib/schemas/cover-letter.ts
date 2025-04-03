@@ -6,7 +6,10 @@ export const coverLetterFormSchema = z.object({
     .string()
     .url('Please enter a valid URL')
     .min(1, 'Company website is required'),
-  workHistory: z.string().min(1, 'Work history is required'),
+  workHistory: z
+    .string()
+    .min(1, 'Work history is required')
+    .max(255, 'Work history must be less than 255 characters'),
   writingStyle: z.enum(['formal', 'informal'], {
     required_error: 'Please select a writing style',
   }),
