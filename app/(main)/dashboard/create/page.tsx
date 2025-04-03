@@ -1,5 +1,6 @@
 'use client'
 
+import { CoverLetterForm } from '@/components/cover-letter-form'
 import { BackgroundPattern } from '@/components/ui/background-pattern'
 import { motion } from 'framer-motion'
 
@@ -20,6 +21,9 @@ export default function CreatePage() {
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
             Start crafting your perfect cover letter.
           </p>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <CoverLetterForm />
+          </div>
         </div>
       </motion.div>
     </div>
