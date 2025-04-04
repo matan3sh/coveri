@@ -27,7 +27,7 @@ export function DashboardSidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="pb-12 min-h-screen w-64 border-r bg-background">
+    <div className="h-full w-64 border-r bg-background">
       <div className="space-y-4 py-4">
         <div className="px-3 py-2">
           <h2 className="mb-6 px-4 text-lg font-semibold tracking-tight">
