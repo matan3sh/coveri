@@ -32,6 +32,7 @@ export function CoverLetterForm() {
     defaultValues: {
       jobTitle: '',
       companyWebsite: '',
+      jobDescription: '',
       workHistory: '',
       writingStyle: 'formal',
     },
@@ -55,7 +56,7 @@ export function CoverLetterForm() {
                 <Input placeholder="e.g. Senior Software Engineer" {...field} />
               </FormControl>
               <FormDescription>
-                The position you&apos;re applying for
+                The position you&apos;re applying for (max 100 characters)
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -71,7 +72,31 @@ export function CoverLetterForm() {
               <FormControl>
                 <Input placeholder="https://company.com" {...field} />
               </FormControl>
-              <FormDescription>The company&apos;s website URL</FormDescription>
+              <FormDescription>
+                The company&apos;s website URL (max 100 characters)
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="jobDescription"
+          render={({ field }: { field: FieldValues }) => (
+            <FormItem>
+              <FormLabel>Job Description</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Paste the job description here..."
+                  className="min-h-[150px]"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Copy and paste the job description from the job posting (max 255
+                characters)
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -85,13 +110,14 @@ export function CoverLetterForm() {
               <FormLabel>Work History</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Paste your work history here..."
+                  placeholder="Copy and paste the Experience section from your CV here..."
                   className="min-h-[200px]"
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-                Your previous work experience and achievements
+                Copy and paste the Experience section from your CV (max 255
+                characters)
               </FormDescription>
               <FormMessage />
             </FormItem>
