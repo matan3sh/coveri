@@ -7,12 +7,12 @@ import { usePathname } from 'next/navigation'
 
 const sidebarItems = [
   {
-    title: 'Your Cover Letters',
+    title: 'Your List',
     href: '/dashboard',
     icon: FileText,
   },
   {
-    title: 'Create New Cover Letter',
+    title: 'Create Cover Letter',
     href: '/dashboard/create',
     icon: PlusCircle,
   },
