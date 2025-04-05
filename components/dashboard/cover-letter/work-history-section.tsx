@@ -103,11 +103,7 @@ export function WorkHistorySection({
             <FormControl>
               <Textarea
                 placeholder="Your work history will appear here after uploading your resume. You can also type or edit it directly."
-                className={cn(
-                  'min-h-[200px] resize-none',
-                  field.value?.length > 800 && 'border-yellow-300',
-                  field.value?.length > 950 && 'border-red-300'
-                )}
+                className={cn('min-h-[200px] resize-none')}
                 value={field.value}
                 onChange={(e) => {
                   if (e.target.value.length <= 1000) {
