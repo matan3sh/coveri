@@ -31,14 +31,14 @@ export function WritingStyleSection({ control }: FormSectionProps) {
       render={({ field }) => (
         <FormItem>
           <FormLabel>Writing Style</FormLabel>
-          <Select onValueChange={field.onChange}>
+          <Select onValueChange={field.onChange} value={field.value}>
             <FormControl>
               <SelectTrigger>
                 <SelectValue placeholder="Select a writing style" />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              <SelectItem value="formal">
+              <SelectItem value="FORMAL">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>Formal</TooltipTrigger>
@@ -48,7 +48,7 @@ export function WritingStyleSection({ control }: FormSectionProps) {
                   </Tooltip>
                 </TooltipProvider>
               </SelectItem>
-              <SelectItem value="informal">
+              <SelectItem value="INFORMAL">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>Informal</TooltipTrigger>

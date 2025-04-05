@@ -25,12 +25,12 @@ export async function generateCoverLetter(data: CoverLetterFormValues) {
     Keep the response under 255 characters while maintaining professionalism and relevance.`
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-3.5-turbo',
       messages: [
         {
           role: 'system',
           content:
-            'You are a professional cover letter writer. Write concise, impactful cover letters that highlight relevant experience and enthusiasm for the role.',
+            'You are a professional cover letter writer. Write concise, impactful cover letters that highlight relevant experience and enthusiasm for the role. Keep responses brief but meaningful.',
         },
         {
           role: 'user',
