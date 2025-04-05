@@ -1,5 +1,5 @@
-import { Header } from '@/components/header'
-import { ThemeProvider } from '@/components/theme-provider'
+import { Header } from '@/components/layout/header'
+import { ThemeProvider } from '@/components/providers/theme-provider'
 import { UserProvider } from '@/lib/contexts/user-context'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Inter } from 'next/font/google'

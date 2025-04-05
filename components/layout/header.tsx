@@ -1,9 +1,9 @@
 'use client'
 
-import { ThemeToggle } from '@/components/theme-toggle'
+import { UserNav } from '@/components/layout/user-nav'
+import { ThemeToggle } from '@/components/providers/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { UserNav } from '@/components/user-nav'
 import { useUser } from '@clerk/nextjs'
 import { Sparkles } from 'lucide-react'
 import Link from 'next/link'

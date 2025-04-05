@@ -1,6 +1,6 @@
 'use client'
 
-import { CoverLetterForm } from '@/components/cover-letter-form'
+import { CoverLetterForm } from '@/components/dashboard/cover-letter-form'
 import { BackgroundPattern } from '@/components/ui/background-pattern'
 import { motion } from 'framer-motion'
 
