@@ -1,5 +1,6 @@
 import { Header } from '@/components/header'
 import { ThemeProvider } from '@/components/theme-provider'
+import { UserProvider } from '@/lib/contexts/user-context'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Inter } from 'next/font/google'
 import './globals.css'
@@ -21,8 +22,10 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <body className={inter.className}>
           <ThemeProvider>
-            <Header />
-            {children}
+            <UserProvider>
+              <Header />
+              {children}
+            </UserProvider>
           </ThemeProvider>
         </body>
       </html>
