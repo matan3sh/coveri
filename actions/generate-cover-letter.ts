@@ -3,7 +3,7 @@
 import { CoverLetterFormValues } from '@/lib/schemas/cover-letter'
 import { prisma } from '@/prisma/prisma'
 import { auth } from '@clerk/nextjs/server'
-import { OpenAI } from 'openai'
+import OpenAI, { APIError } from 'openai'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -17,6 +17,10 @@ export async function generateCoverLetter(data: CoverLetterFormValues) {
       throw new Error('Unauthorized')
     }
 
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OpenAI API key is not configured')
+    }
+
     const prompt = `Write a professional cover letter for a ${data.jobTitle} position.
     Company Website: ${data.companyWebsite}
     Job Description: ${data.jobDescription}
@@ -24,42 +28,60 @@ export async function generateCoverLetter(data: CoverLetterFormValues) {
     Writing Style: ${data.writingStyle}
     Keep the response under 255 characters while maintaining professionalism and relevance.`
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a professional cover letter writer. Write concise, impactful cover letters that highlight relevant experience and enthusiasm for the role. Keep responses brief but meaningful.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      max_tokens: 100,
-      temperature: 0.7,
-    })
+    try {
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a professional cover letter writer. Write concise, impactful cover letters that highlight relevant experience and enthusiasm for the role. Keep responses brief but meaningful.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        max_tokens: 100,
+        temperature: 0.7,
+      })
 
-    const coverLetter = completion.choices[0]?.message?.content
+      const coverLetter = completion.choices[0]?.message?.content
 
-    if (!coverLetter) {
-      throw new Error('Failed to generate cover letter')
+      if (!coverLetter) {
+        throw new Error('Failed to generate cover letter')
+      }
+
+      // Save the cover letter to the database
+      await prisma.coverLetter.create({
+        data: {
+          clerkUserId: userId,
+          jobTitle: data.jobTitle,
+          companyWebsite: data.companyWebsite,
+          jobDescription: data.jobDescription,
+          workHistory: data.workHistory,
+          writingStyle: data.writingStyle,
+        },
+      })
+
+      return { success: true }
+    } catch (openAiError) {
+      // Handle specific OpenAI API errors
+      if (openAiError instanceof APIError) {
+        if (openAiError.status === 429) {
+          throw new Error(
+            'API rate limit exceeded. Please try again in a few moments.'
+          )
+        }
+        if (openAiError.code === 'insufficient_quota') {
+          throw new Error(
+            'OpenAI API quota exceeded. Please contact support for assistance.'
+          )
+        }
+      }
+      // Re-throw other errors
+      throw openAiError
     }
-
-    // Save the cover letter to the database
-    await prisma.coverLetter.create({
-      data: {
-        clerkUserId: userId,
-        jobTitle: data.jobTitle,
-        companyWebsite: data.companyWebsite,
-        jobDescription: data.jobDescription,
-        workHistory: data.workHistory,
-        writingStyle: data.writingStyle,
-      },
-    })
-
-    return { success: true }
   } catch (error) {
     console.error('Error generating cover letter:', error)
     return {
