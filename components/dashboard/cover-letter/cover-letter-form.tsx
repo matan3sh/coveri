@@ -23,7 +23,7 @@ export function CoverLetterForm() {
       companyWebsite: '',
       jobDescription: '',
       workHistory: '',
-      writingStyle: 'formal',
+      writingStyle: undefined,
     },
     mode: 'onTouched', // Only validate after field is touched
   })
@@ -71,7 +71,7 @@ export function CoverLetterForm() {
         <Button
           type="submit"
           className="w-full"
-          disabled={isSubmitting || !isDirty}
+          disabled={isSubmitting || !isDirty || !formValues.writingStyle}
         >
           {isSubmitting ? (
             <>
