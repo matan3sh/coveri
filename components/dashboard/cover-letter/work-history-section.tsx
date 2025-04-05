@@ -16,7 +16,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '../../ui/button'
 import { CharacterCount } from './character-count'
-import { type WorkHistorySectionProps } from './types'
+import { type WorkHistorySectionProps } from './cover-letter.types'
 
 export function WorkHistorySection({
   control,

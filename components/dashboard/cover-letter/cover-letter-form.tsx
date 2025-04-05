@@ -10,10 +10,10 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
-import { JobDescriptionSection } from './cover-letter/job-description-section'
-import { JobDetailsSection } from './cover-letter/job-details-section'
-import { WorkHistorySection } from './cover-letter/work-history-section'
-import { WritingStyleSection } from './cover-letter/writing-style-section'
+import { JobDescriptionSection } from './job-description-section'
+import { JobDetailsSection } from './job-details-section'
+import { WorkHistorySection } from './work-history-section'
+import { WritingStyleSection } from './writing-style-section'
 
 export function CoverLetterForm() {
   const form = useForm<CoverLetterFormValues>({

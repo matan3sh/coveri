@@ -11,7 +11,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { CharacterCount } from './character-count'
-import { type FormSectionProps } from './types'
+import { type FormSectionProps } from './cover-letter.types'
 
 export function JobDescriptionSection({ control }: FormSectionProps) {
   return (

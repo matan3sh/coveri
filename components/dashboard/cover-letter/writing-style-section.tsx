@@ -21,7 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { type FormSectionProps } from './types'
+import { type FormSectionProps } from './cover-letter.types'
 
 export function WritingStyleSection({ control }: FormSectionProps) {
   return (

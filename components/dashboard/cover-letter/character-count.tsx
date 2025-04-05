@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { type CharacterCountProps } from './types'
+import { type CharacterCountProps } from './cover-letter.types'
 
 export function CharacterCount({
   current,

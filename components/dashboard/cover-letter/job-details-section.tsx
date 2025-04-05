@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { CharacterCount } from './character-count'
-import { type FormSectionProps } from './types'
+import { type FormSectionProps } from './cover-letter.types'
 
 export function JobDetailsSection({ control }: FormSectionProps) {
   return (
