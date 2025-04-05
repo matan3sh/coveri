@@ -31,6 +31,7 @@ model CoverLetter {
   companyWebsite String
   jobDescription String       @db.Text
   workHistory    String       @db.Text
+  coverLetter    String       @db.Text
   writingStyle   WritingStyle
   user           User         @relation(fields: [clerkUserId], references: [clerkUserId], onDelete: Cascade)
   createdAt      DateTime     @default(now())

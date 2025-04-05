@@ -61,6 +61,7 @@ export async function generateCoverLetter(data: CoverLetterFormValues) {
           jobDescription: data.jobDescription,
           workHistory: data.workHistory,
           writingStyle: data.writingStyle,
+          coverLetter: coverLetter,
         },
       })
 
