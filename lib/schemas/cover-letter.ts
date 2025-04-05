@@ -18,7 +18,7 @@ export const coverLetterFormSchema = z.object({
     .string()
     .min(1, 'Work history is required')
     .max(1000, 'Work history must be less than 1000 characters'),
-  writingStyle: z.enum(['formal', 'informal'], {
+  writingStyle: z.enum(['FORMAL', 'INFORMAL'], {
     required_error: 'Please select a writing style',
   }),
 })

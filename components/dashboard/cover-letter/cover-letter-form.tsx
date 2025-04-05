@@ -1,14 +1,18 @@
 'use client'
 
+import { generateCoverLetter } from '@/actions/generate-cover-letter'
 import { Button } from '@/components/ui/button'
 import { Form } from '@/components/ui/form'
 import { Progress } from '@/components/ui/progress'
+import { useToast } from '@/hooks/use-toast'
 import {
   coverLetterFormSchema,
   type CoverLetterFormValues,
 } from '@/lib/schemas/cover-letter'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { JobDescriptionSection } from './job-description-section'
 import { JobDetailsSection } from './job-details-section'
@@ -16,6 +20,10 @@ import { WorkHistorySection } from './work-history-section'
 import { WritingStyleSection } from './writing-style-section'
 
 export function CoverLetterForm() {
+  const { toast } = useToast()
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+
   const form = useForm<CoverLetterFormValues>({
     resolver: zodResolver(coverLetterFormSchema),
     defaultValues: {
@@ -25,26 +33,41 @@ export function CoverLetterForm() {
       workHistory: '',
       writingStyle: undefined,
     },
-    mode: 'onTouched', // Only validate after field is touched
+    mode: 'onTouched',
   })
 
-  const isSubmitting = form.formState.isSubmitting
   const isDirty = form.formState.isDirty
-
-  // Watch all form fields for character counting
   const formValues = form.watch()
 
-  // Calculate form completion percentage
   const totalFields = 5
   const completedFields = Object.entries(formValues).filter(([key, value]) => {
-    if (key === 'writingStyle') return !!value // Just check if it exists
+    if (key === 'writingStyle') return !!value
     return value && value.toString().trim().length > 0
   }).length
   const completionPercentage = (completedFields / totalFields) * 100
 
   const onSubmit = async (data: CoverLetterFormValues) => {
-    // This will be implemented in the future
-    console.log(data)
+    startTransition(async () => {
+      try {
+        const result = await generateCoverLetter(data)
+
+        if (!result?.success) {
+          throw new Error(result?.error || 'Failed to generate cover letter')
+        }
+
+        router.push('/dashboard')
+        router.refresh()
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description:
+            error instanceof Error
+              ? error.message
+              : 'Failed to generate cover letter',
+          variant: 'destructive',
+        })
+      }
+    })
   }
 
   return (
@@ -71,9 +94,9 @@ export function CoverLetterForm() {
         <Button
           type="submit"
           className="w-full"
-          disabled={isSubmitting || !isDirty || !formValues.writingStyle}
+          disabled={isPending || !isDirty || !formValues.writingStyle}
         >
-          {isSubmitting ? (
+          {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Generating...

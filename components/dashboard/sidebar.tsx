@@ -7,17 +7,17 @@ import { usePathname } from 'next/navigation'
 
 const sidebarItems = [
   {
-    title: 'Your List',
+    title: 'List',
     href: '/dashboard',
     icon: FileText,
   },
   {
-    title: 'Create Cover Letter',
+    title: 'Create',
     href: '/dashboard/create',
     icon: PlusCircle,
   },
   {
-    title: 'Your Plan',
+    title: 'Plan',
     href: '/dashboard/plan',
     icon: CreditCard,
   },
