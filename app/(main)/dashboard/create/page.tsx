@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 
 export default function CreatePage() {
   return (
-    <div className="h-[calc(100vh-3.5rem)] relative overflow-hidden">
+    <div className="relative overflow-hidden">
       <BackgroundPattern />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -14,7 +14,7 @@ export default function CreatePage() {
         transition={{ duration: 0.5 }}
         className="container mx-auto px-4 py-4 relative z-10 h-full"
       >
-        <div className="max-w-4xl mx-auto h-full flex flex-col">
+        <div className="max-w-4xl mx-auto pb-4 flex flex-col">
           <div className="flex-none">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Create New Cover Letter

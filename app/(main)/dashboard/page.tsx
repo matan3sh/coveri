@@ -8,7 +8,7 @@ export default function DashboardPage() {
   const { user } = useUser()
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] relative overflow-hidden">
+    <div className="relative overflow-hidden">
       <BackgroundPattern />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
