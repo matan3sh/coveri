@@ -13,11 +13,11 @@ export const coverLetterFormSchema = z.object({
   jobDescription: z
     .string()
     .min(1, 'Job description is required')
-    .max(255, 'Job description must be less than 255 characters'),
+    .max(1000, 'Job description must be less than 1000 characters'),
   workHistory: z
     .string()
     .min(1, 'Work history is required')
-    .max(255, 'Work history must be less than 255 characters'),
+    .max(1000, 'Work history must be less than 1000 characters'),
   writingStyle: z.enum(['formal', 'informal'], {
     required_error: 'Please select a writing style',
   }),

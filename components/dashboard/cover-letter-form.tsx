@@ -32,10 +32,14 @@ import {
 } from '@/lib/schemas/cover-letter'
 import { cn } from '@/lib/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Upload } from 'lucide-react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 export function CoverLetterForm() {
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
   const form = useForm<CoverLetterFormValues>({
     resolver: zodResolver(coverLetterFormSchema),
     defaultValues: {
@@ -51,10 +55,64 @@ export function CoverLetterForm() {
   const jobTitle = form.watch('jobTitle')
   const companyWebsite = form.watch('companyWebsite')
   const jobDescription = form.watch('jobDescription')
-  const workHistory = form.watch('workHistory')
 
   const isSubmitting = form.formState.isSubmitting
   const isValid = form.formState.isValid
+
+  // Handle file upload and text extraction
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Reset any previous errors
+    setUploadError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/extract-text', {
+        method: 'POST',
+        body: formData,
+      })
+
+      // Log the raw response for debugging
+      const responseText = await response.text()
+      console.log('Raw response:', responseText)
+
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', parseError)
+        throw new Error('Server returned an invalid response')
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to extract text from file')
+      }
+
+      // Truncate text to 1000 characters if needed
+      const truncatedText = data.text.slice(0, 1000)
+      form.setValue('workHistory', truncatedText)
+
+      if (data.text.length > 1000) {
+        toast.warning(
+          'Your work history was truncated to fit the 1000 character limit'
+        )
+      } else {
+        toast.success('Successfully extracted work history from resume')
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to process file'
+      setUploadError(message)
+      toast.error(message)
+      console.error('Error processing file:', error)
+    }
+  }
 
   // Calculate form completion percentage
   const totalFields = 5
@@ -160,11 +218,17 @@ export function CoverLetterForm() {
                   <Textarea
                     placeholder="Paste the job description here..."
                     className={cn(
-                      'min-h-[100px] resize-none',
-                      jobDescription.length > 200 && 'border-yellow-500',
-                      jobDescription.length > 245 && 'border-red-500'
+                      'min-h-[200px] resize-none',
+                      jobDescription.length > 800 && 'border-yellow-500',
+                      jobDescription.length > 950 && 'border-red-500'
                     )}
                     {...field}
+                    onChange={(e) => {
+                      // Prevent input if it would exceed the character limit
+                      if (e.target.value.length <= 1000) {
+                        field.onChange(e)
+                      }
+                    }}
                   />
                 </FormControl>
                 <FormDescription className="flex justify-between">
@@ -174,11 +238,11 @@ export function CoverLetterForm() {
                   <span
                     className={cn(
                       'text-sm',
-                      jobDescription.length > 200 && 'text-yellow-500',
-                      jobDescription.length > 245 && 'text-red-500'
+                      jobDescription.length > 800 && 'text-yellow-500',
+                      jobDescription.length > 950 && 'text-red-500'
                     )}
                   >
-                    {jobDescription.length}/255
+                    {jobDescription.length}/1000
                   </span>
                 </FormDescription>
                 <FormMessage />
@@ -189,35 +253,72 @@ export function CoverLetterForm() {
           <FormField
             control={form.control}
             name="workHistory"
-            render={({ field }) => (
+            render={({ field: { value, ref, name, onChange } }) => (
               <FormItem>
                 <FormLabel>Work History</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Copy and paste the Experience section from your CV here..."
-                    className={cn(
-                      'min-h-[100px] resize-none',
-                      workHistory.length > 200 && 'border-yellow-500',
-                      workHistory.length > 245 && 'border-red-500'
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <FormControl>
+                      <Input
+                        type="file"
+                        accept=".doc,.docx,.pdf"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        id="file-upload"
+                        ref={ref}
+                        name={name}
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        document.getElementById('file-upload')?.click()
+                      }
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload Resume
+                    </Button>
+                    {value && (
+                      <span
+                        className={cn(
+                          'text-sm',
+                          value.length > 800 && 'text-yellow-500',
+                          value.length > 950 && 'text-red-500'
+                        )}
+                      >
+                        {value.length}/1000 characters used
+                      </span>
                     )}
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription className="flex justify-between">
-                  <span>
-                    Copy and paste the Experience section from your CV
-                  </span>
-                  <span
-                    className={cn(
-                      'text-sm',
-                      workHistory.length > 200 && 'text-yellow-500',
-                      workHistory.length > 245 && 'text-red-500'
-                    )}
-                  >
-                    {workHistory.length}/255
-                  </span>
-                </FormDescription>
-                <FormMessage />
+                  </div>
+                  {uploadError && (
+                    <p className="text-sm text-destructive">{uploadError}</p>
+                  )}
+                  <FormControl>
+                    <Textarea
+                      placeholder="Your work history will appear here after uploading your resume. You can also type or edit it directly."
+                      className={cn(
+                        'min-h-[200px] resize-none',
+                        value?.length > 800 && 'border-yellow-500',
+                        value?.length > 950 && 'border-red-500'
+                      )}
+                      value={value}
+                      onChange={(e) => {
+                        const newValue = e.target.value
+                        // Prevent input if it would exceed the character limit
+                        if (newValue.length <= 1000) {
+                          onChange(newValue)
+                        }
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Upload your resume (supports .doc, .docx, .pdf) - we&apos;ll
+                    extract your work experience, or type it directly. Limited
+                    to 1000 characters.
+                  </FormDescription>
+                  <FormMessage />
+                </div>
               </FormItem>
             )}
           />
