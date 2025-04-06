@@ -1,9 +1,9 @@
 import { Header } from '@/components/layout/header'
 import { ThemeProvider } from '@/components/providers/theme-provider'
-import { Toaster } from '@/components/ui/toaster'
 import { UserProvider } from '@/lib/contexts/user-context'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Inter } from 'next/font/google'
+import { Toaster } from 'sonner'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -26,7 +26,7 @@ export default function RootLayout({
             <UserProvider>
               <Header />
               {children}
-              <Toaster />
+              <Toaster richColors position="top-right" />
             </UserProvider>
           </ThemeProvider>
         </body>
