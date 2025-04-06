@@ -52,16 +52,11 @@ export async function generateCoverLetter(data: CoverLetterFormValues) {
         throw new Error('Failed to generate cover letter')
       }
 
-      // Save the cover letter to the database
       await prisma.coverLetter.create({
         data: {
           clerkUserId: userId,
-          jobTitle: data.jobTitle,
-          companyWebsite: data.companyWebsite,
-          jobDescription: data.jobDescription,
-          workHistory: data.workHistory,
-          writingStyle: data.writingStyle,
-          coverLetter: coverLetter,
+          coverLetter,
+          ...data,
         },
       })
 
