@@ -1,5 +1,6 @@
 'use client'
 
+import { updateCoverLetter } from '@/actions/update-cover-letter'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -8,22 +9,25 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy } from 'lucide-react'
-import { useState } from 'react'
+import { Copy, Loader2 } from 'lucide-react'
+import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
 interface EditCoverLetterDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   initialContent: string
+  coverLetterId: string
 }
 
 export function EditCoverLetterDialog({
   isOpen,
   onOpenChange,
   initialContent,
+  coverLetterId,
 }: EditCoverLetterDialogProps) {
   const [editedContent, setEditedContent] = useState(initialContent)
+  const [isPending, startTransition] = useTransition()
 
   const handleCopyFromDialog = async () => {
     try {
@@ -38,6 +42,30 @@ export function EditCoverLetterDialog({
         duration: 3000,
       })
     }
+  }
+
+  const handleSave = async () => {
+    startTransition(async () => {
+      try {
+        const result = await updateCoverLetter({
+          id: coverLetterId,
+          content: editedContent,
+        })
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to update cover letter')
+        }
+
+        toast.success('Cover letter updated successfully!')
+        onOpenChange(false)
+      } catch (error) {
+        toast.error('Failed to update cover letter', {
+          description:
+            error instanceof Error ? error.message : 'Please try again.',
+          duration: 3000,
+        })
+      }
+    })
   }
 
   return (
@@ -65,15 +93,24 @@ export function EditCoverLetterDialog({
               variant="outline"
               onClick={handleCopyFromDialog}
               className="flex items-center gap-1.5"
+              disabled={isPending}
             >
               <Copy className="h-4 w-4" />
               <span>Copy</span>
             </Button>
             <Button
-              onClick={() => onOpenChange(false)}
+              onClick={handleSave}
               className="flex items-center gap-1.5"
+              disabled={isPending}
             >
-              <span>Done</span>
+              {isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <span>Save Changes</span>
+              )}
             </Button>
           </div>
         </div>

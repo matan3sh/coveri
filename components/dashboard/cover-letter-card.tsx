@@ -145,6 +145,7 @@ export function CoverLetterCard({ coverLetter }: CoverLetterCardProps) {
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         initialContent={coverLetter.coverLetter}
+        coverLetterId={coverLetter.id}
       />
     </div>
   )
