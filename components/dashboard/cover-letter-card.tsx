@@ -1,14 +1,6 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
 import { type CoverLetter } from '@/lib/types/cover-letter'
 import { cn } from '@/lib/utils'
 import {
@@ -21,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { EditCoverLetterDialog } from './edit-cover-letter-dialog'
 
 interface CoverLetterCardProps {
   coverLetter: CoverLetter
@@ -52,26 +45,10 @@ function formatDate(date: Date): string {
 
 export function CoverLetterCard({ coverLetter }: CoverLetterCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editedContent, setEditedContent] = useState(coverLetter.coverLetter)
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(coverLetter.coverLetter)
-      toast.success('Cover letter copied to clipboard!', {
-        description: 'You can now paste it anywhere you need.',
-        duration: 3000,
-      })
-    } catch {
-      toast.error('Failed to copy cover letter', {
-        description: 'Please try again or copy manually.',
-        duration: 3000,
-      })
-    }
-  }
-
-  const handleCopyFromDialog = async () => {
-    try {
-      await navigator.clipboard.writeText(editedContent)
       toast.success('Cover letter copied to clipboard!', {
         description: 'You can now paste it anywhere you need.',
         duration: 3000,
@@ -152,56 +129,23 @@ export function CoverLetterCard({ coverLetter }: CoverLetterCardProps) {
             <Copy className="h-4 w-4" />
             <span className="text-sm">Copy</span>
           </Button>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-              >
-                <Edit2 className="h-4 w-4" />
-                <span className="text-sm">Edit</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Edit Cover Letter</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Textarea
-                    value={editedContent}
-                    onChange={(e) => setEditedContent(e.target.value)}
-                    className="min-h-[300px] resize-none"
-                    maxLength={1000}
-                  />
-                  <div className="flex justify-end">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {editedContent.length}/1000 characters
-                    </span>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={handleCopyFromDialog}
-                    className="flex items-center gap-1.5"
-                  >
-                    <Copy className="h-4 w-4" />
-                    <span>Copy</span>
-                  </Button>
-                  <Button
-                    onClick={() => setIsDialogOpen(false)}
-                    className="flex items-center gap-1.5"
-                  >
-                    <span>Done</span>
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsDialogOpen(true)}
+            className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+          >
+            <Edit2 className="h-4 w-4" />
+            <span className="text-sm">Edit</span>
+          </Button>
         </div>
       </div>
+
+      <EditCoverLetterDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        initialContent={coverLetter.coverLetter}
+      />
     </div>
   )
 }
