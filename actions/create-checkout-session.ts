@@ -12,6 +12,24 @@ export async function createCheckoutSession(amount: number) {
       throw new Error('NEXT_PUBLIC_SERVER_URL is not set')
     }
 
+    const successUrl = new URL(
+      '/dashboard/plan',
+      process.env.NEXT_PUBLIC_SERVER_URL
+    )
+    successUrl.searchParams.set('success', 'true')
+    successUrl.searchParams.set('amount', amount.toString())
+
+    const cancelUrl = new URL(
+      '/dashboard/plan',
+      process.env.NEXT_PUBLIC_SERVER_URL
+    )
+    cancelUrl.searchParams.set('canceled', 'true')
+
+    console.log('Creating checkout session with URLs:', {
+      successUrl: successUrl.toString(),
+      cancelUrl: cancelUrl.toString(),
+    })
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -28,8 +46,8 @@ export async function createCheckoutSession(amount: number) {
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/dashboard/plan?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/dashboard/plan?canceled=true`,
+      success_url: successUrl.toString(),
+      cancel_url: cancelUrl.toString(),
     })
 
     if (!session.url) {

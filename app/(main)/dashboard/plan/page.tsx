@@ -3,7 +3,7 @@
 import { createCheckoutSession } from '@/actions/create-checkout-session'
 import { BackgroundPattern } from '@/components/ui/background-pattern'
 import { motion } from 'framer-motion'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -16,6 +16,7 @@ export default function PlanPage() {
   const { credits, isLoading, loadCredits } = useCredits()
   const [isPurchasing, setIsPurchasing] = useState(false)
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   useEffect(() => {
     const success = searchParams.get('success')
@@ -23,25 +24,33 @@ export default function PlanPage() {
     const error = searchParams.get('error')
     const amount = searchParams.get('amount')
 
+    console.log('URL parameters:', { success, canceled, error, amount })
+
     if (success === 'true' && amount) {
+      console.log('Showing success toast for amount:', amount)
       toast.success(`Successfully added ${amount} credits to your account!`)
       loadCredits() // Refresh the credits balance
+      // Clear the URL parameters
+      router.replace('/dashboard/plan')
     } else if (canceled === 'true') {
+      console.log('Showing canceled toast')
       toast.info('Purchase was canceled')
+      // Clear the URL parameters
+      router.replace('/dashboard/plan')
     } else if (error) {
+      console.log('Showing error toast:', error)
       toast.error(`Purchase failed: ${error}`)
+      // Clear the URL parameters
+      router.replace('/dashboard/plan')
     }
-  }, [searchParams, loadCredits])
+  }, [searchParams, loadCredits, router])
 
   const handlePurchase = async (amount: number) => {
     setIsPurchasing(true)
     try {
       const { url } = await createCheckoutSession(amount)
       if (url) {
-        // Add the amount to the URL so we can show it in the success toast
-        const successUrl = new URL(url)
-        successUrl.searchParams.set('amount', amount.toString())
-        window.location.href = successUrl.toString()
+        window.location.href = url
       } else {
         throw new Error('No checkout URL returned')
       }
