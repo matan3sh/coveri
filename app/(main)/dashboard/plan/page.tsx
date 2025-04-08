@@ -1,9 +1,10 @@
 'use client'
 
-import { purchaseCredits } from '@/actions/manage-credits'
+import { createCheckoutSession } from '@/actions/create-checkout-session'
 import { BackgroundPattern } from '@/components/ui/background-pattern'
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { CreditBalance } from '@/components/dashboard/plan/credit-balance'
@@ -14,19 +15,43 @@ import { creditPackages } from '../../../../types/dashboard-plan.types'
 export default function PlanPage() {
   const { credits, isLoading, loadCredits } = useCredits()
   const [isPurchasing, setIsPurchasing] = useState(false)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const success = searchParams.get('success')
+    const canceled = searchParams.get('canceled')
+    const error = searchParams.get('error')
+    const amount = searchParams.get('amount')
+
+    if (success === 'true' && amount) {
+      toast.success(`Successfully added ${amount} credits to your account!`)
+      loadCredits() // Refresh the credits balance
+    } else if (canceled === 'true') {
+      toast.info('Purchase was canceled')
+    } else if (error) {
+      toast.error(`Purchase failed: ${error}`)
+    }
+  }, [searchParams, loadCredits])
 
   const handlePurchase = async (amount: number) => {
     setIsPurchasing(true)
     try {
-      const result = await purchaseCredits(amount)
-      if (result.success) {
-        await loadCredits() // Reload credits after successful purchase
-        toast.success(`Successfully purchased ${amount} credits!`)
+      const { url } = await createCheckoutSession(amount)
+      if (url) {
+        // Add the amount to the URL so we can show it in the success toast
+        const successUrl = new URL(url)
+        successUrl.searchParams.set('amount', amount.toString())
+        window.location.href = successUrl.toString()
       } else {
-        toast.error('Failed to purchase credits')
+        throw new Error('No checkout URL returned')
       }
-    } catch {
-      toast.error('Failed to purchase credits')
+    } catch (error) {
+      console.error('Purchase error:', error)
+      if (error instanceof Error) {
+        toast.error(error.message)
+      } else {
+        toast.error('Failed to initiate purchase')
+      }
     } finally {
       setIsPurchasing(false)
     }
