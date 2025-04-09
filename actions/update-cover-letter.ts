@@ -1,9 +1,11 @@
 'use server'
 
+import { createLogger } from '@/lib/logger'
 import { prisma } from '@/prisma/prisma'
-import { auth } from '@clerk/nextjs/server'
+import { currentUser } from '@clerk/nextjs/server'
 import { z } from 'zod'
 
+// Schema for validating update cover letter data
 const updateCoverLetterSchema = z.object({
   id: z.string().min(1, 'Cover letter ID is required'),
   content: z
@@ -12,24 +14,46 @@ const updateCoverLetterSchema = z.object({
     .max(1000, 'Cover letter must be less than 1000 characters'),
 })
 
+// Create a logger specific to this module
+const logger = createLogger('update-cover-letter')
+
 export async function updateCoverLetter(
   data: z.infer<typeof updateCoverLetterSchema>
 ) {
   try {
-    const { userId } = await auth()
-
-    if (!userId) {
-      throw new Error('Unauthorized')
-    }
-
     // Validate the input data
     const validatedData = updateCoverLetterSchema.parse(data)
 
-    // Update the cover letter
+    const user = await currentUser()
+    if (!user) {
+      logger.warn('Unauthorized access attempt to updateCoverLetter')
+      throw new Error('Unauthorized')
+    }
+
+    const coverLetter = await prisma.coverLetter.findUnique({
+      where: {
+        id: validatedData.id,
+      },
+      select: {
+        clerkUserId: true,
+      },
+    })
+
+    if (!coverLetter) {
+      logger.warn(`Cover letter not found: ${validatedData.id}`)
+      throw new Error('Cover letter not found')
+    }
+
+    if (coverLetter.clerkUserId !== user.id) {
+      logger.warn(
+        `User ${user.id} attempted to update a cover letter that doesn't belong to them: ${validatedData.id}`
+      )
+      throw new Error('Unauthorized')
+    }
+
     const updatedCoverLetter = await prisma.coverLetter.update({
       where: {
         id: validatedData.id,
-        clerkUserId: userId, // Ensure the user owns the cover letter
       },
       data: {
         coverLetter: validatedData.content,
@@ -37,15 +61,10 @@ export async function updateCoverLetter(
       },
     })
 
-    return { success: true, coverLetter: updatedCoverLetter }
+    logger.success(`Cover letter updated: ${validatedData.id}`)
+    return updatedCoverLetter
   } catch (error) {
-    console.error('Error updating cover letter:', error)
-    return {
-      success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to update cover letter',
-    }
+    logger.error('Error updating cover letter', error)
+    throw error
   }
 }

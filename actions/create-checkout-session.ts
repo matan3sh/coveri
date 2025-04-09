@@ -1,7 +1,11 @@
 'use server'
 
+import { createLogger } from '@/lib/logger'
 import { stripe } from '@/lib/stripe'
 import { auth } from '@clerk/nextjs/server'
+
+// Create a logger specific to this module
+const logger = createLogger('create-checkout-session')
 
 export async function createCheckoutSession(amount: number) {
   try {
@@ -14,11 +18,8 @@ export async function createCheckoutSession(amount: number) {
       throw new Error('NEXT_PUBLIC_SERVER_URL is not set')
     }
 
-    console.log(
-      'Creating checkout session for user:',
-      clerkUserId,
-      'amount:',
-      amount
+    logger.info(
+      `Creating checkout session for user: ${clerkUserId}, amount: ${amount}`
     )
 
     const successUrl = new URL(
@@ -35,13 +36,13 @@ export async function createCheckoutSession(amount: number) {
     cancelUrl.searchParams.set('canceled', 'true')
 
     // Verify that userId is valid before creating the session
-    console.log('User ID for metadata:', clerkUserId)
+    logger.debug(`User ID for metadata: ${clerkUserId}`)
     if (
       !clerkUserId ||
       typeof clerkUserId !== 'string' ||
       clerkUserId.length < 5
     ) {
-      console.error('Invalid clerkUserId:', clerkUserId)
+      logger.error(`Invalid clerkUserId: ${clerkUserId}`)
       throw new Error('Invalid user ID')
     }
 
@@ -67,7 +68,7 @@ export async function createCheckoutSession(amount: number) {
       },
     })
 
-    console.log('Checkout session created:', {
+    logger.success(`Checkout session created: ${session.id}`, {
       id: session.id,
       url: session.url,
       clerkUserId,
@@ -78,7 +79,7 @@ export async function createCheckoutSession(amount: number) {
 
     return { url: session.url }
   } catch (error) {
-    console.error('Error creating checkout session:', error)
+    logger.error('Error creating checkout session', error)
     throw error
   }
 }

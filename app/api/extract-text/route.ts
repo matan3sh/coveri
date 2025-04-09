@@ -1,8 +1,13 @@
+import { createLogger } from '@/lib/logger'
 import { NextRequest, NextResponse } from 'next/server'
+import * as pdfParse from 'pdf-parse'
 import { CORS_HEADERS, SUPPORTED_FILE_TYPES } from './constants'
 import { processPDF, processWord } from './file-processors'
 import { ExtractedTextResult, TextExtractionError } from './types'
 import { cleanText, findWorkExperienceSection } from './utils'
+
+// Create a logger specific to this module
+const logger = createLogger('extract-text')
 
 export async function POST(req: NextRequest) {
   const headers = new Headers(CORS_HEADERS)
@@ -13,34 +18,38 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const file = await req
-      .formData()
-      .then((data) => data.get('file') as File | null)
+    const formData = await req.formData()
+    const file = formData.get('file') as File
+    const sectionType = formData.get('sectionType') as string
 
     if (!file) {
-      console.error('No file received in request')
+      logger.error('No file received in request')
       return createErrorResponse('No file uploaded', 400, headers)
     }
 
-    console.log('Processing file:', {
-      name: file.name,
+    logger.info('Processing file', {
       type: file.type,
+      name: file.name,
       size: file.size,
+      sectionType,
     })
 
-    const buffer = Buffer.from(await file.arrayBuffer())
     let text = ''
 
-    // Process file based on type
-    try {
-      text = await processFileContent(file.type, buffer)
-    } catch (error) {
-      console.error(`Error processing ${file.type} file:`, error)
-      return createErrorResponse(
-        `Failed to parse ${getFileTypeName(file.type)}`,
-        500,
-        headers
-      )
+    // Handle different file types
+    if (file.type === 'application/pdf') {
+      const buffer = await file.arrayBuffer()
+      const pdfData = await pdfParse(buffer)
+      text = pdfData.text
+    } else if (
+      file.type === 'text/plain' ||
+      file.type === 'application/rtf' ||
+      file.type.includes('word')
+    ) {
+      text = await file.text()
+    } else {
+      logger.error(`Unsupported file type: ${file.type}`)
+      return createErrorResponse('Unsupported file type', 400, headers)
     }
 
     // Clean and format the extracted text
@@ -49,13 +58,15 @@ export async function POST(req: NextRequest) {
     // Extract work experience section
     const result = extractAndFormatText(text)
 
-    console.log('Successfully extracted text length:', result.originalLength)
-    console.log('Truncated text length:', result.text.length)
-    console.log('Section type found:', result.sectionType)
+    logger.success('Text extracted successfully', {
+      extractedLength: result.text.length,
+      originalLength: result.originalLength,
+      sectionType: result.sectionType,
+    })
 
     return NextResponse.json(result, { headers })
   } catch (error) {
-    console.error('Error processing file:', error)
+    logger.error('Error processing file', error)
     return createErrorResponse('Error processing file', 500, headers)
   }
 }

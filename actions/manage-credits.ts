@@ -1,70 +1,121 @@
 'use server'
 
+import { createLogger } from '@/lib/logger'
 import { prisma } from '@/prisma/prisma'
-import { auth } from '@clerk/nextjs/server'
+import { currentUser } from '@clerk/nextjs/server'
 
+// Create a logger specific to this module
+const logger = createLogger('manage-credits')
+
+/**
+ * Get the current user's credits
+ * @returns The user's current credit balance
+ */
 export async function getUserCredits() {
   try {
-    const { userId } = await auth()
-
-    if (!userId) {
-      throw new Error('Unauthorized')
+    const user = await currentUser()
+    if (!user) {
+      logger.warn('Unauthorized access attempt to getUserCredits')
+      return null
     }
 
-    const user = await prisma.user.findUnique({
-      where: { clerkUserId: userId },
-      select: { credits: true },
+    const dbUser = await prisma.user.findUnique({
+      where: {
+        clerkUserId: user.id,
+      },
+      select: {
+        credits: true,
+      },
     })
 
-    return { success: true, credits: user?.credits ?? 0 }
+    logger.debug(
+      `Retrieved credits for user ${user.id}: ${dbUser?.credits ?? 0}`
+    )
+    return dbUser?.credits ?? 0
   } catch (error) {
-    console.error('Error fetching user credits:', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch credits',
-    }
+    logger.error('Error getting user credits', error)
+    throw error
   }
 }
 
+/**
+ * Add credits to the current user's account
+ * @param amount The amount of credits to add
+ */
 export async function purchaseCredits(amount: number) {
   try {
-    const { userId } = await auth()
-    console.log('purchaseCredits - User ID:', userId)
-
-    if (!userId) {
-      throw new Error('Unauthorized')
+    const user = await currentUser()
+    if (!user) {
+      logger.warn('Unauthorized access attempt to purchaseCredits')
+      return null
     }
 
-    // First check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { clerkUserId: userId },
-      select: { credits: true, clerkUserId: true },
-    })
-    console.log('purchaseCredits - Existing user:', existingUser)
+    logger.info(`Adding ${amount} credits to user ${user.id}`)
 
-    if (!existingUser) {
-      throw new Error('User not found')
-    }
-
-    // Update credits
     const updatedUser = await prisma.user.update({
-      where: { clerkUserId: userId },
+      where: {
+        clerkUserId: user.id,
+      },
       data: {
         credits: {
           increment: amount,
         },
       },
-      select: { credits: true },
+      select: {
+        credits: true,
+      },
     })
-    console.log('purchaseCredits - Updated user:', updatedUser)
 
-    return { success: true, credits: updatedUser.credits }
+    logger.success(
+      `Credits updated for user ${user.id}. New balance: ${updatedUser.credits}`
+    )
+    return updatedUser.credits
   } catch (error) {
-    console.error('Error purchasing credits:', error)
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : 'Failed to purchase credits',
+    logger.error(`Error purchasing credits: ${amount}`, error)
+    throw error
+  }
+}
+
+/**
+ * Update credits for a user by their Clerk ID - used by webhooks
+ * @param clerkUserId The Clerk user ID
+ * @param amount The amount of credits to add
+ */
+export async function updateCreditsForUser(
+  clerkUserId: string,
+  amount: number
+) {
+  try {
+    if (!clerkUserId) {
+      logger.error('No user ID provided to updateCreditsForUser')
+      throw new Error('User ID is required')
     }
+
+    logger.info(`Adding ${amount} credits to user ${clerkUserId} via webhook`)
+
+    const updatedUser = await prisma.user.update({
+      where: {
+        clerkUserId,
+      },
+      data: {
+        credits: {
+          increment: amount,
+        },
+      },
+      select: {
+        credits: true,
+      },
+    })
+
+    logger.success(
+      `Credits updated for user ${clerkUserId} via webhook. New balance: ${updatedUser.credits}`
+    )
+    return updatedUser.credits
+  } catch (error) {
+    logger.error(
+      `Error updating credits for user ${clerkUserId}: ${amount}`,
+      error
+    )
+    throw error
   }
 }
