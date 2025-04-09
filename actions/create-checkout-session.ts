@@ -1,16 +1,25 @@
 'use server'
 
 import { stripe } from '@/lib/stripe'
+import { auth } from '@clerk/nextjs/server'
 
 export async function createCheckoutSession(amount: number) {
   try {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error('STRIPE_SECRET_KEY is not set')
+    const { userId: clerkUserId } = await auth()
+    if (!clerkUserId) {
+      throw new Error('User not authenticated')
     }
 
     if (!process.env.NEXT_PUBLIC_SERVER_URL) {
       throw new Error('NEXT_PUBLIC_SERVER_URL is not set')
     }
+
+    console.log(
+      'Creating checkout session for user:',
+      clerkUserId,
+      'amount:',
+      amount
+    )
 
     const successUrl = new URL(
       '/dashboard/plan',
@@ -25,11 +34,6 @@ export async function createCheckoutSession(amount: number) {
     )
     cancelUrl.searchParams.set('canceled', 'true')
 
-    console.log('Creating checkout session with URLs:', {
-      successUrl: successUrl.toString(),
-      cancelUrl: cancelUrl.toString(),
-    })
-
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -38,9 +42,8 @@ export async function createCheckoutSession(amount: number) {
             currency: 'usd',
             product_data: {
               name: `${amount} Credits`,
-              description: 'Cover letter generation credits',
             },
-            unit_amount: amount * 100, // amount in cents
+            unit_amount: amount * 100, // Convert to cents
           },
           quantity: 1,
         },
@@ -48,18 +51,23 @@ export async function createCheckoutSession(amount: number) {
       mode: 'payment',
       success_url: successUrl.toString(),
       cancel_url: cancelUrl.toString(),
+      metadata: {
+        userId: clerkUserId, // This is the Clerk user ID
+      },
     })
 
-    if (!session.url) {
-      throw new Error('Failed to create checkout session: No URL returned')
-    }
+    console.log('Checkout session created:', {
+      id: session.id,
+      url: session.url,
+      clerkUserId,
+      metadata: session.metadata,
+      successUrl: successUrl.toString(),
+      cancelUrl: cancelUrl.toString(),
+    })
 
     return { url: session.url }
   } catch (error) {
     console.error('Error creating checkout session:', error)
-    if (error instanceof Error) {
-      throw new Error(`Failed to create checkout session: ${error.message}`)
-    }
-    throw new Error('Failed to create checkout session: Unknown error')
+    throw error
   }
 }
