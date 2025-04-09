@@ -29,13 +29,24 @@ export async function getUserCredits() {
 export async function purchaseCredits(amount: number) {
   try {
     const { userId } = await auth()
+    console.log('purchaseCredits - User ID:', userId)
 
     if (!userId) {
       throw new Error('Unauthorized')
     }
 
-    // In a real implementation, this would be handled by Stripe
-    // For now, we'll just update the credits directly
+    // First check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { clerkUserId: userId },
+      select: { credits: true, clerkUserId: true },
+    })
+    console.log('purchaseCredits - Existing user:', existingUser)
+
+    if (!existingUser) {
+      throw new Error('User not found')
+    }
+
+    // Update credits
     const updatedUser = await prisma.user.update({
       where: { clerkUserId: userId },
       data: {
@@ -45,6 +56,7 @@ export async function purchaseCredits(amount: number) {
       },
       select: { credits: true },
     })
+    console.log('purchaseCredits - Updated user:', updatedUser)
 
     return { success: true, credits: updatedUser.credits }
   } catch (error) {

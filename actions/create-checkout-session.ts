@@ -34,6 +34,17 @@ export async function createCheckoutSession(amount: number) {
     )
     cancelUrl.searchParams.set('canceled', 'true')
 
+    // Verify that userId is valid before creating the session
+    console.log('User ID for metadata:', clerkUserId)
+    if (
+      !clerkUserId ||
+      typeof clerkUserId !== 'string' ||
+      clerkUserId.length < 5
+    ) {
+      console.error('Invalid clerkUserId:', clerkUserId)
+      throw new Error('Invalid user ID')
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
