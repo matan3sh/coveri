@@ -1,6 +1,5 @@
 import { createLogger } from '@/lib/logger'
 import { NextRequest, NextResponse } from 'next/server'
-import * as pdfParse from 'pdf-parse'
 import { CORS_HEADERS, SUPPORTED_FILE_TYPES } from './constants'
 import { processPDF, processWord } from './file-processors'
 import { ExtractedTextResult, TextExtractionError } from './types'
@@ -36,20 +35,17 @@ export async function POST(req: NextRequest) {
 
     let text = ''
 
-    // Handle different file types
-    if (file.type === 'application/pdf') {
-      const buffer = await file.arrayBuffer()
-      const pdfData = await pdfParse(buffer)
-      text = pdfData.text
-    } else if (
-      file.type === 'text/plain' ||
-      file.type === 'application/rtf' ||
-      file.type.includes('word')
-    ) {
-      text = await file.text()
-    } else {
-      logger.error(`Unsupported file type: ${file.type}`)
-      return createErrorResponse('Unsupported file type', 400, headers)
+    // Process file based on type
+    try {
+      const buffer = Buffer.from(await file.arrayBuffer())
+      text = await processFileContent(file.type, buffer)
+    } catch (error) {
+      logger.error(`Error processing ${file.type} file`, error)
+      return createErrorResponse(
+        `Failed to parse ${getFileTypeName(file.type)}`,
+        500,
+        headers
+      )
     }
 
     // Clean and format the extracted text
@@ -71,6 +67,9 @@ export async function POST(req: NextRequest) {
   }
 }
 
+/**
+ * Process the file content based on file type
+ */
 async function processFileContent(
   fileType: string,
   buffer: Buffer
@@ -81,7 +80,13 @@ async function processFileContent(
     case SUPPORTED_FILE_TYPES.DOC:
     case SUPPORTED_FILE_TYPES.DOCX:
       return processWord(buffer)
+    case 'text/plain':
+    case 'application/rtf':
+      return buffer.toString('utf-8')
     default:
+      if (fileType.includes('word')) {
+        return processWord(buffer)
+      }
       throw new Error(`Unsupported file type: ${fileType}`)
   }
 }
@@ -115,6 +120,9 @@ function createErrorResponse(
   return NextResponse.json({ error: message }, { status, headers })
 }
 
+/**
+ * Get a human-readable file type name
+ */
 function getFileTypeName(mimeType: string): string {
   switch (mimeType) {
     case SUPPORTED_FILE_TYPES.PDF:
