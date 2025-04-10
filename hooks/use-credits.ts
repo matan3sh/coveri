@@ -10,8 +10,8 @@ export const useCredits = () => {
     setIsLoading(true)
     try {
       const result = await getUserCredits()
-      if (result.success && result.credits !== undefined) {
-        setCredits(result.credits)
+      if (result.success && result.data) {
+        setCredits(result.data.credits)
       } else {
         toast.error(result.error || 'Failed to load credits')
       }
