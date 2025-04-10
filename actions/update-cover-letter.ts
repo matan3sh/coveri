@@ -17,9 +17,18 @@ const updateCoverLetterSchema = z.object({
 // Create a logger specific to this module
 const logger = createLogger('update-cover-letter')
 
+interface UpdateCoverLetterResponse {
+  success: boolean
+  error?: string
+  data?: {
+    id: string
+    content: string
+  }
+}
+
 export async function updateCoverLetter(
   data: z.infer<typeof updateCoverLetterSchema>
-) {
+): Promise<UpdateCoverLetterResponse> {
   try {
     // Validate the input data
     const validatedData = updateCoverLetterSchema.parse(data)
@@ -62,9 +71,21 @@ export async function updateCoverLetter(
     })
 
     logger.success(`Cover letter updated: ${validatedData.id}`)
-    return updatedCoverLetter
+    return {
+      success: true,
+      data: {
+        id: updatedCoverLetter.id,
+        content: updatedCoverLetter.coverLetter,
+      },
+    }
   } catch (error) {
-    logger.error('Error updating cover letter', error)
-    throw error
+    logger.error('Error updating cover letter:', error)
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to update cover letter',
+    }
   }
 }

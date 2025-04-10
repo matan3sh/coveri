@@ -7,16 +7,25 @@ import { currentUser } from '@clerk/nextjs/server'
 // Create a logger specific to this module
 const logger = createLogger('manage-credits')
 
+interface GetUserCreditsResponse {
+  success: boolean
+  credits?: number
+  error?: string
+}
+
 /**
  * Get the current user's credits
  * @returns The user's current credit balance
  */
-export async function getUserCredits() {
+export async function getUserCredits(): Promise<GetUserCreditsResponse> {
   try {
     const user = await currentUser()
     if (!user) {
       logger.warn('Unauthorized access attempt to getUserCredits')
-      return null
+      return {
+        success: false,
+        error: 'Unauthorized',
+      }
     }
 
     const dbUser = await prisma.user.findUnique({
@@ -31,10 +40,17 @@ export async function getUserCredits() {
     logger.debug(
       `Retrieved credits for user ${user.id}: ${dbUser?.credits ?? 0}`
     )
-    return dbUser?.credits ?? 0
+    return {
+      success: true,
+      credits: dbUser?.credits ?? 0,
+    }
   } catch (error) {
     logger.error('Error getting user credits', error)
-    throw error
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to get user credits',
+    }
   }
 }
 
