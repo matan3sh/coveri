@@ -1,47 +1,29 @@
 'use server'
 
 import { createLogger } from '@/lib/logger'
+import { CoverLetterResponse, UpdateCoverLetterValues } from '@/lib/schemas'
 import { prisma } from '@/prisma/prisma'
 import { currentUser } from '@clerk/nextjs/server'
-import { z } from 'zod'
-
-// Schema for validating update cover letter data
-const updateCoverLetterSchema = z.object({
-  id: z.string().min(1, 'Cover letter ID is required'),
-  content: z
-    .string()
-    .min(1, 'Cover letter content is required')
-    .max(1000, 'Cover letter must be less than 1000 characters'),
-})
 
 // Create a logger specific to this module
 const logger = createLogger('update-cover-letter')
 
-interface UpdateCoverLetterResponse {
-  success: boolean
-  error?: string
-  data?: {
-    id: string
-    content: string
-  }
-}
-
 export async function updateCoverLetter(
-  data: z.infer<typeof updateCoverLetterSchema>
-): Promise<UpdateCoverLetterResponse> {
+  data: UpdateCoverLetterValues
+): Promise<CoverLetterResponse> {
   try {
-    // Validate the input data
-    const validatedData = updateCoverLetterSchema.parse(data)
-
     const user = await currentUser()
     if (!user) {
       logger.warn('Unauthorized access attempt to updateCoverLetter')
-      throw new Error('Unauthorized')
+      return {
+        success: false,
+        error: 'Unauthorized',
+      }
     }
 
     const coverLetter = await prisma.coverLetter.findUnique({
       where: {
-        id: validatedData.id,
+        id: data.id,
       },
       select: {
         clerkUserId: true,
@@ -49,37 +31,40 @@ export async function updateCoverLetter(
     })
 
     if (!coverLetter) {
-      logger.warn(`Cover letter not found: ${validatedData.id}`)
-      throw new Error('Cover letter not found')
+      logger.warn(`Cover letter not found: ${data.id}`)
+      return {
+        success: false,
+        error: 'Cover letter not found',
+      }
     }
 
     if (coverLetter.clerkUserId !== user.id) {
       logger.warn(
-        `User ${user.id} attempted to update a cover letter that doesn't belong to them: ${validatedData.id}`
+        `User ${user.id} attempted to update a cover letter that doesn't belong to them: ${data.id}`
       )
-      throw new Error('Unauthorized')
+      return {
+        success: false,
+        error: 'Unauthorized',
+      }
     }
 
     const updatedCoverLetter = await prisma.coverLetter.update({
       where: {
-        id: validatedData.id,
+        id: data.id,
       },
       data: {
-        coverLetter: validatedData.content,
+        coverLetter: data.content,
         updatedAt: new Date(),
       },
     })
 
-    logger.success(`Cover letter updated: ${validatedData.id}`)
+    logger.success(`Cover letter updated: ${data.id}`)
     return {
       success: true,
-      data: {
-        id: updatedCoverLetter.id,
-        content: updatedCoverLetter.coverLetter,
-      },
+      data: updatedCoverLetter,
     }
   } catch (error) {
-    logger.error('Error updating cover letter:', error)
+    logger.error('Error updating cover letter', error)
     return {
       success: false,
       error:

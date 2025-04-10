@@ -1,10 +1,10 @@
 'use server'
 
 import { createLogger } from '@/lib/logger'
+import { CoverLetterFormValues, CoverLetterResponse } from '@/lib/schemas'
 import { prisma } from '@/prisma/prisma'
 import { currentUser } from '@clerk/nextjs/server'
 import { OpenAI } from 'openai'
-import { z } from 'zod'
 
 // Create a logger specific to this module
 const logger = createLogger('generate-cover-letter')
@@ -14,26 +14,17 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-// Schema for validating generate cover letter data
-const generateCoverLetterSchema = z.object({
-  jobTitle: z.string().min(1, 'Job title is required'),
-  companyWebsite: z.string().optional(),
-  jobDescription: z.string().min(1, 'Job description is required'),
-  workHistory: z.string().min(1, 'Work history is required'),
-  writingStyle: z.enum(['FORMAL', 'INFORMAL']).default('FORMAL'),
-})
-
 export async function generateCoverLetter(
-  data: z.infer<typeof generateCoverLetterSchema>
-) {
+  data: CoverLetterFormValues
+): Promise<CoverLetterResponse> {
   try {
-    // Validate input data
-    const validatedData = generateCoverLetterSchema.parse(data)
-
     const user = await currentUser()
     if (!user) {
       logger.warn('Unauthorized access attempt to generateCoverLetter')
-      throw new Error('Unauthorized')
+      return {
+        success: false,
+        error: 'Unauthorized',
+      }
     }
 
     // Check if the user has enough credits
@@ -50,17 +41,20 @@ export async function generateCoverLetter(
       logger.warn(
         `User ${user.id} attempted to generate a cover letter with insufficient credits`
       )
-      throw new Error('Not enough credits')
+      return {
+        success: false,
+        error: 'Not enough credits',
+      }
     }
 
     logger.info(`Generating cover letter for user ${user.id}`, {
-      jobTitle: validatedData.jobTitle,
-      writingStyle: validatedData.writingStyle,
+      jobTitle: data.jobTitle,
+      writingStyle: data.writingStyle,
     })
 
     // Convert writingStyle enum to a more descriptive value for the AI
     const styleDescription =
-      validatedData.writingStyle === 'FORMAL'
+      data.writingStyle === 'FORMAL'
         ? 'professional and formal'
         : 'conversational and friendly'
 
@@ -70,11 +64,11 @@ export async function generateCoverLetter(
       messages: [
         {
           role: 'system',
-          content: `You are a professional cover letter writer. Create a ${styleDescription} cover letter for the job title "${validatedData.jobTitle}" based on the provided work history. Make it personalized and unique.`,
+          content: `You are a professional cover letter writer. Create a ${styleDescription} cover letter for the job title "${data.jobTitle}" based on the provided work history. Make it personalized and unique.`,
         },
         {
           role: 'user',
-          content: `Write a cover letter for a ${validatedData.jobTitle} position. Here's the job description: ${validatedData.jobDescription}. Here's my work history: ${validatedData.workHistory}`,
+          content: `Write a cover letter for a ${data.jobTitle} position. Here's the job description: ${data.jobDescription}. Here's my work history: ${data.workHistory}`,
         },
       ],
       temperature: 0.7,
@@ -101,18 +95,21 @@ export async function generateCoverLetter(
         clerkUserId: user.id,
         coverLetter: coverLetterContent,
         date: new Date(),
-        jobTitle: validatedData.jobTitle,
-        companyWebsite: validatedData.companyWebsite || '',
-        jobDescription: validatedData.jobDescription,
-        workHistory: validatedData.workHistory,
-        writingStyle: validatedData.writingStyle,
+        jobTitle: data.jobTitle,
+        companyWebsite: data.companyWebsite || '',
+        jobDescription: data.jobDescription,
+        workHistory: data.workHistory,
+        writingStyle: data.writingStyle,
       },
     })
 
     logger.success(`Cover letter generated successfully for user ${user.id}`, {
       coverId: coverLetter.id,
     })
-    return { success: true, coverLetter }
+    return {
+      success: true,
+      data: coverLetter,
+    }
   } catch (error) {
     logger.error('Error generating cover letter', error)
     return {

@@ -6,7 +6,7 @@ import { CoverLetterCardSkeleton } from '@/components/dashboard/cover-letter-car
 import { EmptyState } from '@/components/dashboard/empty-state'
 import { Header } from '@/components/dashboard/layout/header'
 import { BackgroundPattern } from '@/components/ui/background-pattern'
-import { type CoverLetter } from '@/lib/types/cover-letter'
+import { type CoverLetter } from '@/lib/schemas'
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 
@@ -18,11 +18,11 @@ export default function DashboardPage() {
     const fetchCoverLetters = async () => {
       try {
         const result = await getCoverLetters()
-        if (result.success && result.coverLetters) {
-          setCoverLetters(result.coverLetters)
+        if (result.success && result.data) {
+          setCoverLetters(result.data)
         }
       } catch (error) {
-        console.error('Error fetching cover letters:', error)
+        console.error('Failed to fetch cover letters:', error)
       } finally {
         setIsLoading(false)
       }
@@ -40,27 +40,25 @@ export default function DashboardPage() {
         transition={{ duration: 0.5 }}
         className="container mx-auto px-4 py-4 relative z-10 h-full"
       >
-        <div className="max-w-4xl mx-auto h-full flex flex-col">
+        <div className="max-w-4xl mx-auto pb-4 flex flex-col h-full">
           <Header
             isLoading={isLoading}
             coverLettersCount={coverLetters.length}
           />
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto space-y-4">
             {isLoading ? (
-              <div className="grid grid-cols-1 gap-6">
-                {[...Array(2)].map((_, index) => (
-                  <CoverLetterCardSkeleton key={index} />
-                ))}
-              </div>
+              <>
+                <CoverLetterCardSkeleton />
+                <CoverLetterCardSkeleton />
+                <CoverLetterCardSkeleton />
+              </>
             ) : coverLetters.length > 0 ? (
-              <div className="grid grid-cols-1 gap-6">
-                {coverLetters.map((coverLetter) => (
-                  <CoverLetterCard
-                    key={coverLetter.id}
-                    coverLetter={coverLetter}
-                  />
-                ))}
-              </div>
+              coverLetters.map((coverLetter) => (
+                <CoverLetterCard
+                  key={coverLetter.id}
+                  coverLetter={coverLetter}
+                />
+              ))
             ) : (
               <EmptyState />
             )}

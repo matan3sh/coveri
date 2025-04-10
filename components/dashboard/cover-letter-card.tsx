@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { type CoverLetter } from '@/lib/types/cover-letter'
+import { type CoverLetter } from '@/lib/schemas'
 import { cn } from '@/lib/utils'
 import {
   Calendar,

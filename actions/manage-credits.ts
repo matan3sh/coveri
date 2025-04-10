@@ -1,23 +1,18 @@
 'use server'
 
 import { createLogger } from '@/lib/logger'
+import { UserResponse } from '@/lib/schemas'
 import { prisma } from '@/prisma/prisma'
 import { currentUser } from '@clerk/nextjs/server'
 
 // Create a logger specific to this module
 const logger = createLogger('manage-credits')
 
-interface GetUserCreditsResponse {
-  success: boolean
-  credits?: number
-  error?: string
-}
-
 /**
  * Get the current user's credits
  * @returns The user's current credit balance
  */
-export async function getUserCredits(): Promise<GetUserCreditsResponse> {
+export async function getUserCredits(): Promise<UserResponse> {
   try {
     const user = await currentUser()
     if (!user) {
@@ -33,16 +28,26 @@ export async function getUserCredits(): Promise<GetUserCreditsResponse> {
         clerkUserId: user.id,
       },
       select: {
+        id: true,
+        clerkUserId: true,
+        email: true,
         credits: true,
+        createdAt: true,
+        updatedAt: true,
       },
     })
 
-    logger.debug(
-      `Retrieved credits for user ${user.id}: ${dbUser?.credits ?? 0}`
-    )
+    if (!dbUser) {
+      return {
+        success: false,
+        error: 'User not found',
+      }
+    }
+
+    logger.debug(`Retrieved credits for user ${user.id}: ${dbUser.credits}`)
     return {
       success: true,
-      credits: dbUser?.credits ?? 0,
+      data: dbUser,
     }
   } catch (error) {
     logger.error('Error getting user credits', error)
@@ -58,12 +63,15 @@ export async function getUserCredits(): Promise<GetUserCreditsResponse> {
  * Add credits to the current user's account
  * @param amount The amount of credits to add
  */
-export async function purchaseCredits(amount: number) {
+export async function purchaseCredits(amount: number): Promise<UserResponse> {
   try {
     const user = await currentUser()
     if (!user) {
       logger.warn('Unauthorized access attempt to purchaseCredits')
-      return null
+      return {
+        success: false,
+        error: 'Unauthorized',
+      }
     }
 
     logger.info(`Adding ${amount} credits to user ${user.id}`)
@@ -78,17 +86,29 @@ export async function purchaseCredits(amount: number) {
         },
       },
       select: {
+        id: true,
+        clerkUserId: true,
+        email: true,
         credits: true,
+        createdAt: true,
+        updatedAt: true,
       },
     })
 
     logger.success(
       `Credits updated for user ${user.id}. New balance: ${updatedUser.credits}`
     )
-    return updatedUser.credits
+    return {
+      success: true,
+      data: updatedUser,
+    }
   } catch (error) {
     logger.error(`Error purchasing credits: ${amount}`, error)
-    throw error
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to purchase credits',
+    }
   }
 }
 
@@ -100,11 +120,14 @@ export async function purchaseCredits(amount: number) {
 export async function updateCreditsForUser(
   clerkUserId: string,
   amount: number
-) {
+): Promise<UserResponse> {
   try {
     if (!clerkUserId) {
       logger.error('No user ID provided to updateCreditsForUser')
-      throw new Error('User ID is required')
+      return {
+        success: false,
+        error: 'User ID is required',
+      }
     }
 
     logger.info(`Adding ${amount} credits to user ${clerkUserId} via webhook`)
@@ -119,19 +142,31 @@ export async function updateCreditsForUser(
         },
       },
       select: {
+        id: true,
+        clerkUserId: true,
+        email: true,
         credits: true,
+        createdAt: true,
+        updatedAt: true,
       },
     })
 
     logger.success(
       `Credits updated for user ${clerkUserId} via webhook. New balance: ${updatedUser.credits}`
     )
-    return updatedUser.credits
+    return {
+      success: true,
+      data: updatedUser,
+    }
   } catch (error) {
     logger.error(
       `Error updating credits for user ${clerkUserId}: ${amount}`,
       error
     )
-    throw error
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to update credits',
+    }
   }
 }
