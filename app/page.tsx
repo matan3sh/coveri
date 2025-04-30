@@ -6,8 +6,20 @@ import { Button } from '@/components/ui/button'
 import { HeroIllustration } from '@/components/ui/hero-illustration'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const initialAnimation = mounted ? { opacity: 0, y: 20 } : undefined
+  const animateAnimation = mounted ? { opacity: 1, y: 0 } : undefined
+  const initialScale = mounted ? { scale: 0.95, opacity: 0 } : undefined
+  const animateScale = mounted ? { scale: 1, opacity: 1 } : undefined
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
@@ -17,15 +29,15 @@ export default function Home() {
       >
         <BackgroundPattern />
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={initialAnimation}
+          animate={animateAnimation}
           transition={{ duration: 0.5 }}
           className="container mx-auto px-4 text-center z-10 relative"
         >
           <div className="max-w-3xl mx-auto">
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              initial={initialScale}
+              animate={animateScale}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="mb-6 inline-block"
             >
@@ -70,16 +82,16 @@ export default function Home() {
         className="py-20 bg-gradient-to-b from-white to-blue-50 dark:from-gray-900 dark:to-gray-800"
       >
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={initialAnimation}
+          whileInView={animateAnimation}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
           className="container mx-auto px-4"
         >
           <div className="text-center mb-12">
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
+              initial={initialScale}
+              whileInView={animateScale}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
               className="mb-4 inline-block"
@@ -122,8 +134,8 @@ export default function Home() {
             ].map((feature, index) => (
               <motion.div
                 key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={initialAnimation}
+                whileInView={animateAnimation}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.2 }}
                 className="relative group"
@@ -156,15 +168,15 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700" />
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={initialAnimation}
+          whileInView={animateAnimation}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
           className="container mx-auto px-4 text-center relative z-10"
         >
           <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            whileInView={{ scale: 1, opacity: 1 }}
+            initial={initialScale}
+            whileInView={animateScale}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
             className="mb-6 inline-block"
@@ -181,8 +193,8 @@ export default function Home() {
             job search with Coveri.
           </p>
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
+            initial={initialAnimation}
+            whileInView={animateAnimation}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
