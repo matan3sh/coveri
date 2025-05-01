@@ -92,6 +92,7 @@ IMPORTANT INSTRUCTIONS:
 4. End with a professional closing like "Sincerely" or "Best regards"
 5. Write in a flowing paragraph style, not in bullet points or lists
 6. Do not repeat or list out the work history - incorporate it naturally into the narrative
+7. The cover letter MUST be 1000 characters or less
 
 The output should be a clean, flowing cover letter text that can be directly used.`,
         },
