@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useUser } from '@clerk/nextjs'
 import { Sparkles } from 'lucide-react'
 import Link from 'next/link'
+import { CreditIndicator } from './credit-indicator'
 
 export function Header() {
   const { isSignedIn, isLoaded } = useUser()
@@ -35,6 +36,7 @@ export function Header() {
         </div>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
           <div className="flex items-center gap-3">
+            {isSignedIn && <CreditIndicator />}
             <ThemeToggle />
             {!isLoaded ? (
               <Skeleton className="h-8 w-8 rounded-full" />
