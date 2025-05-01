@@ -4,6 +4,7 @@ import { createLogger } from '@/lib/logger'
 import { CoverLetterFormValues, CoverLetterResponse } from '@/lib/schemas'
 import { prisma } from '@/prisma/prisma'
 import { currentUser } from '@clerk/nextjs/server'
+import { revalidatePath } from 'next/cache'
 import { OpenAI } from 'openai'
 
 // Create a logger specific to this module
@@ -76,14 +77,23 @@ export async function generateCoverLetter(
           role: 'system',
           content: `You are a professional cover letter writer. Create a ${styleDescription} cover letter for the job title "${data.jobTitle}" based on the provided work history. Make it personalized and unique.
 
-Important: Generate ONLY the cover letter content itself. DO NOT include:
-- Header with contact information
-- Recipient's address
-- Date
-- Any placeholder text like [Your Name] or [Company Name]
-- Any formatting instructions
+IMPORTANT INSTRUCTIONS:
+1. Generate ONLY the cover letter content itself
+2. DO NOT include:
+   - Header with contact information
+   - Recipient's address
+   - Date
+   - Any placeholder text like [Your Name] or [Company Name]
+   - Any formatting instructions
+   - Bullet points or lists
+   - Work history in bullet point format
+   - Any section headers or labels
+3. Start directly with "Dear [Hiring Manager]" or similar greeting
+4. End with a professional closing like "Sincerely" or "Best regards"
+5. Write in a flowing paragraph style, not in bullet points or lists
+6. Do not repeat or list out the work history - incorporate it naturally into the narrative
 
-Start directly with the greeting and end with the closing.`,
+The output should be a clean, flowing cover letter text that can be directly used.`,
         },
         {
           role: 'user',
@@ -134,6 +144,10 @@ Start directly with the greeting and end with the closing.`,
       coverId: result.coverLetter.id,
       remainingCredits: result.updatedUser.credits,
     })
+
+    // Revalidate both root and dashboard layouts to update the credits indicator
+    revalidatePath('/', 'layout')
+    revalidatePath('/dashboard', 'layout')
 
     return {
       success: true,
