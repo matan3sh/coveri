@@ -87,43 +87,48 @@ export async function generateCoverLetter(
     const coverLetterContent =
       completion.choices[0]?.message?.content?.trim() || ''
 
-    // Deduct one credit from the user
-    const updatedUser = await prisma.user.update({
-      where: {
-        clerkUserId: user.id,
-      },
-      data: {
-        credits: {
-          decrement: 1,
+    // Use a transaction to ensure both credit deduction and cover letter creation happen atomically
+    const result = await prisma.$transaction(async (tx) => {
+      // First, deduct one credit from the user
+      const updatedUser = await tx.user.update({
+        where: {
+          clerkUserId: user.id,
         },
-      },
-      select: {
-        credits: true,
-      },
-    })
+        data: {
+          credits: {
+            decrement: 1,
+          },
+        },
+        select: {
+          credits: true,
+        },
+      })
 
-    // Store the cover letter in the database
-    const coverLetter = await prisma.coverLetter.create({
-      data: {
-        clerkUserId: user.id,
-        coverLetter: coverLetterContent,
-        date: new Date(),
-        jobTitle: data.jobTitle,
-        companyWebsite: data.companyWebsite || '',
-        jobDescription: data.jobDescription,
-        workHistory: data.workHistory,
-        writingStyle: data.writingStyle,
-      },
+      // Then, create the cover letter
+      const coverLetter = await tx.coverLetter.create({
+        data: {
+          clerkUserId: user.id,
+          coverLetter: coverLetterContent,
+          date: new Date(),
+          jobTitle: data.jobTitle,
+          companyWebsite: data.companyWebsite || '',
+          jobDescription: data.jobDescription,
+          workHistory: data.workHistory,
+          writingStyle: data.writingStyle,
+        },
+      })
+
+      return { updatedUser, coverLetter }
     })
 
     logger.success(`Cover letter generated successfully for user ${user.id}`, {
-      coverId: coverLetter.id,
-      remainingCredits: updatedUser.credits,
+      coverId: result.coverLetter.id,
+      remainingCredits: result.updatedUser.credits,
     })
 
     return {
       success: true,
-      data: coverLetter,
+      data: result.coverLetter,
     }
   } catch (error) {
     logger.error('Error generating cover letter', error)
