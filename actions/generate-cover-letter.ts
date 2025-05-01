@@ -37,19 +37,29 @@ export async function generateCoverLetter(
       },
     })
 
-    if (!dbUser || dbUser.credits < 1) {
+    if (!dbUser) {
+      logger.error(`User ${user.id} not found in database`)
+      return {
+        success: false,
+        error: 'User account not found',
+      }
+    }
+
+    if (dbUser.credits < 1) {
       logger.warn(
-        `User ${user.id} attempted to generate a cover letter with insufficient credits`
+        `User ${user.id} attempted to generate a cover letter with insufficient credits (${dbUser.credits} credits)`
       )
       return {
         success: false,
-        error: 'Not enough credits',
+        error:
+          'Insufficient credits. Please purchase credits to generate a cover letter.',
       }
     }
 
     logger.info(`Generating cover letter for user ${user.id}`, {
       jobTitle: data.jobTitle,
       writingStyle: data.writingStyle,
+      remainingCredits: dbUser.credits,
     })
 
     // Convert writingStyle enum to a more descriptive value for the AI
@@ -78,7 +88,7 @@ export async function generateCoverLetter(
       completion.choices[0]?.message?.content?.trim() || ''
 
     // Deduct one credit from the user
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: {
         clerkUserId: user.id,
       },
@@ -86,6 +96,9 @@ export async function generateCoverLetter(
         credits: {
           decrement: 1,
         },
+      },
+      select: {
+        credits: true,
       },
     })
 
@@ -105,7 +118,9 @@ export async function generateCoverLetter(
 
     logger.success(`Cover letter generated successfully for user ${user.id}`, {
       coverId: coverLetter.id,
+      remainingCredits: updatedUser.credits,
     })
+
     return {
       success: true,
       data: coverLetter,
