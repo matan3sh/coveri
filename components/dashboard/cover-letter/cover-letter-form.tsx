@@ -4,6 +4,7 @@ import { generateCoverLetter } from '@/actions/generate-cover-letter'
 import { Button } from '@/components/ui/button'
 import { Form } from '@/components/ui/form'
 import { Progress } from '@/components/ui/progress'
+import { useCredits } from '@/hooks/use-credits'
 import { useToast } from '@/hooks/use-toast'
 import {
   coverLetterFormSchema,
@@ -23,6 +24,7 @@ export function CoverLetterForm() {
   const { toast } = useToast()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const { loadCredits } = useCredits()
 
   const form = useForm<CoverLetterFormValues>({
     resolver: zodResolver(coverLetterFormSchema),
@@ -54,6 +56,9 @@ export function CoverLetterForm() {
         if (!result?.success) {
           throw new Error(result?.error || 'Failed to generate cover letter')
         }
+
+        // Refresh credits before navigation
+        await loadCredits()
 
         router.push('/dashboard')
         router.refresh()
