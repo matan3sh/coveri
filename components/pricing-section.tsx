@@ -1,39 +1,9 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
+import { PackageCard } from '@/components/dashboard/plan/package-card'
+import { pricingPlans } from '@/lib/config/pricing'
 import { motion } from 'framer-motion'
-import Link from 'next/link'
-
-const pricingPlans = [
-  {
-    name: 'Basic',
-    price: '$5',
-    features: [
-      'Generate 5 cover letters per month',
-      'Basic AI customization',
-      'Standard templates',
-      'Email support',
-    ],
-    cta: 'Get Started',
-    href: '/signup',
-    popular: false,
-  },
-  {
-    name: 'Premium',
-    price: '$15',
-    features: [
-      'Unlimited cover letters',
-      'Advanced AI customization',
-      'Premium templates',
-      'Priority support',
-      'Resume integration',
-      'Custom branding',
-    ],
-    cta: 'Get Premium',
-    href: '/signup?plan=premium',
-    popular: true,
-  },
-]
+import { useState } from 'react'
 
 const container = {
   hidden: { opacity: 0 },
@@ -51,6 +21,22 @@ const item = {
 }
 
 export function PricingSection() {
+  const [isPurchasing, setIsPurchasing] = useState(false)
+
+  const handlePurchase = async (amount: number) => {
+    setIsPurchasing(true)
+    try {
+      // Redirect to signup page with the selected plan
+      window.location.href = `/signup?plan=${
+        amount === 5 ? 'basic' : 'premium'
+      }`
+    } catch (error) {
+      console.error('Purchase error:', error)
+    } finally {
+      setIsPurchasing(false)
+    }
+  }
+
   return (
     <section id="pricing" className="container mx-auto px-4 py-16">
       <motion.div
@@ -77,67 +63,19 @@ export function PricingSection() {
         className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto"
       >
         {pricingPlans.map((plan) => (
-          <motion.div
-            key={plan.name}
-            variants={item}
-            className={`relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border ${
-              plan.popular
-                ? 'border-blue-500 dark:border-blue-400'
-                : 'border-gray-200 dark:border-gray-700'
-            }`}
-          >
-            {plan.popular && (
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-                  Most Popular
-                </span>
-              </div>
-            )}
-            <div className="text-center">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                {plan.name}
-              </h3>
-              <div className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
-                {plan.price}
-                <span className="text-base font-normal text-gray-600 dark:text-gray-400">
-                  /month
-                </span>
-              </div>
-            </div>
-            <ul className="space-y-4 mb-8">
-              {plan.features.map((feature) => (
-                <li
-                  key={feature}
-                  className="flex items-center text-gray-600 dark:text-gray-300"
-                >
-                  <svg
-                    className="w-5 h-5 text-green-500 mr-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-            <Link href={plan.href}>
-              <Button
-                className={`w-full ${
-                  plan.popular
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
-                    : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                {plan.cta}
-              </Button>
-            </Link>
+          <motion.div key={plan.id} variants={item}>
+            <PackageCard
+              pack={{
+                id: plan.id,
+                title: plan.name,
+                description: `Get ${plan.credits} credits for your cover letters`,
+                credits: plan.credits,
+                price: plan.price,
+                isPremium: plan.popular,
+              }}
+              onPurchase={handlePurchase}
+              isPurchasing={isPurchasing}
+            />
           </motion.div>
         ))}
       </motion.div>

@@ -9,8 +9,8 @@ import { toast } from 'sonner'
 
 import { CreditBalance } from '@/components/dashboard/plan/credit-balance'
 import { PackageCard } from '@/components/dashboard/plan/package-card'
-import { useCredits } from '../../../../hooks/use-credits'
-import { creditPackages } from '../../../../types/dashboard-plan.types'
+import { useCredits } from '@/hooks/use-credits'
+import { pricingPlans } from '@/lib/config/pricing'
 
 export default function PlanPage() {
   const { credits, isLoading, loadCredits } = useCredits()
@@ -24,23 +24,15 @@ export default function PlanPage() {
     const error = searchParams.get('error')
     const amount = searchParams.get('amount')
 
-    console.log('URL parameters:', { success, canceled, error, amount })
-
     if (success === 'true' && amount) {
-      console.log('Showing success toast for amount:', amount)
       toast.success(`Successfully added ${amount} credits to your account!`)
-      loadCredits() // Refresh the credits balance
-      // Clear the URL parameters
+      loadCredits()
       router.replace('/dashboard/plan')
     } else if (canceled === 'true') {
-      console.log('Showing canceled toast')
       toast.info('Purchase was canceled')
-      // Clear the URL parameters
       router.replace('/dashboard/plan')
     } else if (error) {
-      console.log('Showing error toast:', error)
       toast.error(`Purchase failed: ${error}`)
-      // Clear the URL parameters
       router.replace('/dashboard/plan')
     }
   }, [searchParams, loadCredits, router])
@@ -88,10 +80,17 @@ export default function PlanPage() {
           <CreditBalance credits={credits} isLoading={isLoading} />
 
           <div className="grid gap-6 md:grid-cols-2">
-            {creditPackages.map((pack) => (
+            {pricingPlans.map((plan) => (
               <PackageCard
-                key={pack.id}
-                pack={pack}
+                key={plan.id}
+                pack={{
+                  id: plan.id,
+                  title: plan.name,
+                  description: `Get ${plan.credits} credits for your cover letters`,
+                  credits: plan.credits,
+                  price: plan.price,
+                  isPremium: plan.popular,
+                }}
                 onPurchase={handlePurchase}
                 isPurchasing={isPurchasing}
               />

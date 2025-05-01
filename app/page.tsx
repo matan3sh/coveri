@@ -162,56 +162,6 @@ export default function Home() {
 
       {/* Pricing Section */}
       <PricingSection />
-
-      {/* CTA Section */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700" />
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-        <motion.div
-          initial={initialAnimation}
-          whileInView={animateAnimation}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="container mx-auto px-4 text-center relative z-10"
-        >
-          <motion.div
-            initial={initialScale}
-            whileInView={animateScale}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="mb-6 inline-block"
-          >
-            <span className="px-3 py-1 rounded-full text-sm font-medium bg-white/10 text-white">
-              Start Your Journey
-            </span>
-          </motion.div>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to Create Your Perfect Cover Letter?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of professionals who have already transformed their
-            job search with Coveri.
-          </p>
-          <motion.div
-            initial={initialAnimation}
-            whileInView={animateAnimation}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <Link href="/signup">
-              <Button
-                size="lg"
-                className="bg-white text-blue-600 hover:bg-blue-50 shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 transition-all duration-200"
-              >
-                Start Free Trial
-              </Button>
-            </Link>
-          </motion.div>
-          <div className="mt-8 text-blue-100 text-sm">
-            No credit card required • 14-day free trial • Cancel anytime
-          </div>
-        </motion.div>
-      </section>
     </div>
   )
 }
