@@ -74,7 +74,16 @@ export async function generateCoverLetter(
       messages: [
         {
           role: 'system',
-          content: `You are a professional cover letter writer. Create a ${styleDescription} cover letter for the job title "${data.jobTitle}" based on the provided work history. Make it personalized and unique.`,
+          content: `You are a professional cover letter writer. Create a ${styleDescription} cover letter for the job title "${data.jobTitle}" based on the provided work history. Make it personalized and unique.
+
+Important: Generate ONLY the cover letter content itself. DO NOT include:
+- Header with contact information
+- Recipient's address
+- Date
+- Any placeholder text like [Your Name] or [Company Name]
+- Any formatting instructions
+
+Start directly with the greeting and end with the closing.`,
         },
         {
           role: 'user',
